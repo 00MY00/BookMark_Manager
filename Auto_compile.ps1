@@ -180,7 +180,7 @@ if (-Not ($PathAdd.ToLower() -eq "n")) {
     # Définir le chemin source et destination
     $CurrentDirectory = Get-Location
     $sourcePath = "$($CurrentDirectory.Path)\output\BookmarkManager-win-x64"
-    $destinationPath = "C:\Users\$env:USERNAME\BookmarkManager-win-x64\BookmarkManager.exe"
+    $destinationPath = "C:\Users\$env:USERNAME\BookmarkManager-win-x64\"
 
     # Copier le dossier dans le répertoire utilisateur
     Write-Host "Copying the program to $destinationPath..." -ForegroundColor Cyan
@@ -188,7 +188,7 @@ if (-Not ($PathAdd.ToLower() -eq "n")) {
 
     # Ajouter le chemin au PATH global (de l'utilisateur)
     if (-not ($env:PATH -like "*$destinationPath*")) {
-        [System.Environment]::SetEnvironmentVariable("PATH", $env:PATH + ";$destinationPath", [System.EnvironmentVariableTarget]::User)
+        [System.Environment]::SetEnvironmentVariable("PATH", $env:PATH + ";$destinationPath/BookmarkManager.exe", [System.EnvironmentVariableTarget]::User)
         Write-Host "The path $destinationPath has been added to the user PATH." -ForegroundColor Green
         # Mettre à jour la session actuelle pour que le changement soit immédiat
         $env:PATH += ";$destinationPath"
