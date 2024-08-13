@@ -28,13 +28,16 @@ namespace BookmarkManager
 
             [Option('b', "browser", Required = false, HelpText = "Specify the browser (optional, e.g., 'chrome', 'firefox').")]
             public string Browser { get; set; }
+
+            [Option('q', "silent", Required = false, Default = 0, HelpText = "Silent mode: 0 (default) - normal output, 1 - minimal output (true/false).")]
+            public int Silent { get; set; }
         }
 
         static void Main(string[] args)
         {
             if (args.Length == 0)
             {
-                Console.WriteLine("Usage: BookmarkManager.exe --mode <import|export|set-startup> --path <browser path> [--startup <url>] [--export-file <file path>] [--import-file <file path>] [--browser <browser>]");
+                Console.WriteLine("Usage: BookmarkManager.exe --mode <import|export|set-startup> --path <browser path> [--startup <url>] [--export-file <file path>] [--import-file <file path>] [--browser <browser>] [--silent <0|1>]");
                 Console.WriteLine("Options:");
                 Console.WriteLine("  -m, --mode           Mode of operation: 'import', 'export', or 'set-startup'.");
                 Console.WriteLine("  -p, --path           Path to the browser where bookmarks or preferences are stored.");
@@ -42,6 +45,7 @@ namespace BookmarkManager
                 Console.WriteLine("  -e, --export-file    (Optional) Path and filename for exporting bookmarks (only for 'export' mode).");
                 Console.WriteLine("  -i, --import-file    (Optional) Path and filename for importing bookmarks (only for 'import' mode).");
                 Console.WriteLine("  -b, --browser        (Optional) Specify the browser (e.g., 'chrome', 'firefox').");
+                Console.WriteLine("  -q, --silent         (Optional) Silent mode: 0 (default) - normal output, 1 - minimal output (true/false).");
 
                 Thread.Sleep(20000);
                 return;
@@ -53,32 +57,43 @@ namespace BookmarkManager
 
         private static void RunOptionsAndReturnExitCode(Options opts)
         {
+            bool success = false;
+
             if (opts.Mode == "import")
             {
-                ImportBookmarks(opts.Path, opts.ImportFile);
+                success = ImportBookmarks(opts.Path, opts.ImportFile, opts.Silent);
             }
             else if (opts.Mode == "export")
             {
-                ExportBookmarks(opts.Path, opts.ExportFile);
+                success = ExportBookmarks(opts.Path, opts.ExportFile, opts.Silent);
             }
             else if (opts.Mode == "set-startup" && !string.IsNullOrEmpty(opts.StartupPage))
             {
-                SetStartupPage(opts.Path, opts.StartupPage);
+                success = SetStartupPage(opts.Path, opts.StartupPage, opts.Silent);
             }
             else
             {
-                Console.WriteLine("Invalid mode or missing URL for 'set-startup' mode.");
+                if (opts.Silent == 0)
+                {
+                    Console.WriteLine("Invalid mode or missing URL for 'set-startup' mode.");
+                }
+                return;
+            }
+
+            if (opts.Silent == 1)
+            {
+                Console.WriteLine(success ? "true" : "false");
             }
         }
 
-        public static void ImportBookmarks(string browserPath, string importFilePath)
+        public static bool ImportBookmarks(string browserPath, string importFilePath, int silent)
         {
+            bool exceptionOccurred = false;
+
             try
             {
                 string bookmarkFile = Path.Combine(browserPath, "Bookmarks");
                 string backupFile = Path.Combine(browserPath, "Bookmarks.bak");
-
-                Console.WriteLine($"Importing bookmarks to: {bookmarkFile}");
 
                 if (string.IsNullOrEmpty(importFilePath))
                 {
@@ -87,15 +102,17 @@ namespace BookmarkManager
 
                 if (!File.Exists(importFilePath))
                 {
-                    Console.WriteLine($"The import file '{importFilePath}' does not exist.");
-                    return;
+                    if (silent == 0)
+                    {
+                        Console.WriteLine($"The import file '{importFilePath}' does not exist.");
+                    }
+                    return false;
                 }
 
                 JObject existingBookmarks;
 
                 if (!File.Exists(bookmarkFile))
                 {
-                    Console.WriteLine($"The bookmark file '{bookmarkFile}' does not exist. Creating a new one.");
                     existingBookmarks = CreateEmptyBookmarkStructure();
                 }
                 else
@@ -110,11 +127,104 @@ namespace BookmarkManager
                 File.WriteAllText(bookmarkFile, existingBookmarks.ToString());
                 File.WriteAllText(backupFile, existingBookmarks.ToString());
 
-                Console.WriteLine($"Bookmarks have been imported into: {bookmarkFile} and {backupFile}");
+                return exceptionOccurred ? throw new Exception("trueWithExceptions") : true;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error during bookmark import: {ex.Message}");
+                if (silent == 0)
+                {
+                    Console.WriteLine($"Error during bookmark import: {ex.Message}");
+                }
+                return exceptionOccurred ? throw new Exception("trueWithExceptions") : false;
+            }
+        }
+
+        public static bool ExportBookmarks(string browserPath, string exportFilePath, int silent)
+        {
+            bool exceptionOccurred = false;
+
+            try
+            {
+                string bookmarkFile = Path.Combine(browserPath, "Bookmarks");
+
+                if (!File.Exists(bookmarkFile))
+                {
+                    if (silent == 0)
+                    {
+                        Console.WriteLine($"The bookmark file '{bookmarkFile}' does not exist.");
+                    }
+                    return false;
+                }
+
+                var json = File.ReadAllText(bookmarkFile);
+                var bookmarks = JObject.Parse(json);
+
+                if (string.IsNullOrEmpty(exportFilePath))
+                {
+                    exportFilePath = Path.Combine(browserPath, "ExportedBookmarks.json");
+                }
+
+                File.WriteAllText(exportFilePath, bookmarks.ToString());
+
+                return exceptionOccurred ? throw new Exception("trueWithExceptions") : true;
+            }
+            catch (IOException ex)
+            {
+                if (silent == 0)
+                {
+                    Console.WriteLine($"File access error: {ex.Message}");
+                }
+                return exceptionOccurred ? throw new Exception("trueWithExceptions") : false;
+            }
+            catch (Exception ex)
+            {
+                if (silent == 0)
+                {
+                    Console.WriteLine($"An error occurred: {ex.Message}");
+                }
+                return exceptionOccurred ? throw new Exception("trueWithExceptions") : false;
+            }
+        }
+
+        public static bool SetStartupPage(string browserPath, string startupPage, int silent)
+        {
+            bool exceptionOccurred = false;
+
+            try
+            {
+                string prefsFile = Path.Combine(browserPath, "Preferences");
+                string backupPrefsFile = Path.Combine(browserPath, "Preferences.bak");
+
+                if (!File.Exists(prefsFile))
+                {
+                    if (silent == 0)
+                    {
+                        Console.WriteLine($"The preferences file '{prefsFile}' does not exist.");
+                    }
+                    return false;
+                }
+
+                var json = File.ReadAllText(prefsFile);
+                var prefs = JObject.Parse(json);
+
+                prefs["session"] = prefs["session"] ?? new JObject();
+                prefs["session"]["restore_on_startup"] = 4;
+
+                prefs["session"]["startup_urls"] = new JArray { startupPage };
+                prefs["homepage"] = startupPage;
+
+                File.WriteAllText(prefsFile, prefs.ToString());
+                File.WriteAllText(backupPrefsFile, prefs.ToString());
+
+                return exceptionOccurred ? throw new Exception("trueWithExceptions") : true;
+            }
+            catch (Exception ex)
+            {
+                if (silent == 0)
+                {
+                    Console.WriteLine($"Error modifying preferences: {ex.Message}");
+                }
+                return exceptionOccurred ? throw new Exception("trueWithExceptions") : false;
             }
         }
 
@@ -154,8 +264,20 @@ namespace BookmarkManager
             {
                 foreach (var importedItem in importedChildren)
                 {
+                    // Vérifier si l'élément importé existe déjà pour éviter les doublons
+                    var matchingItem = existingChildren.FirstOrDefault(
+                        child => child["name"]?.ToString() == importedItem["name"]?.ToString() &&
+                        child["url"]?.ToString() == importedItem["url"]?.ToString()
+                    );
+
+                    if (matchingItem != null)
+                    {
+                        continue; // Ignorer l'élément s'il existe déjà
+                    }
+
                     var matchingFolder = existingChildren.FirstOrDefault(
-                        child => child["name"]?.ToString() == importedItem["name"]?.ToString() && child["type"]?.ToString() == "folder"
+                        child => child["name"]?.ToString() == importedItem["name"]?.ToString() &&
+                        child["type"]?.ToString() == "folder"
                     ) as JObject;
 
                     if (matchingFolder != null)
@@ -167,79 +289,6 @@ namespace BookmarkManager
                         existingChildren.Add(importedItem);
                     }
                 }
-            }
-        }
-
-        public static void ExportBookmarks(string browserPath, string exportFilePath)
-        {
-            try
-            {
-                string bookmarkFile = Path.Combine(browserPath, "Bookmarks");
-
-                Console.WriteLine($"Exporting bookmarks from: {bookmarkFile}");
-
-                if (!File.Exists(bookmarkFile))
-                {
-                    Console.WriteLine($"The bookmark file '{bookmarkFile}' does not exist.");
-                    return;
-                }
-
-                var json = File.ReadAllText(bookmarkFile);
-                var bookmarks = JObject.Parse(json);
-
-                if (string.IsNullOrEmpty(exportFilePath))
-                {
-                    exportFilePath = Path.Combine(browserPath, "ExportedBookmarks.json");
-                }
-
-                File.WriteAllText(exportFilePath, bookmarks.ToString());
-
-                Console.WriteLine($"Bookmarks have been exported to: {exportFilePath}");
-            }
-            catch (IOException ex)
-            {
-                Console.WriteLine($"File access error: {ex.Message}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"An error occurred: {ex.Message}");
-            }
-        }
-
-        public static void SetStartupPage(string browserPath, string startupPage)
-        {
-            try
-            {
-                string prefsFile = Path.Combine(browserPath, "Preferences");
-                string backupPrefsFile = Path.Combine(browserPath, "Preferences.bak");
-
-                Console.WriteLine($"Setting startup page in preferences file: {prefsFile}");
-                Console.WriteLine($"Backup preferences file: {backupPrefsFile}");
-
-                if (!File.Exists(prefsFile))
-                {
-                    Console.WriteLine($"The preferences file '{prefsFile}' does not exist.");
-                    return;
-                }
-
-                var json = File.ReadAllText(prefsFile);
-                var prefs = JObject.Parse(json);
-
-                prefs["session"] = prefs["session"] ?? new JObject();
-                prefs["session"]["restore_on_startup"] = 4;
-
-                prefs["session"]["startup_urls"] = new JArray { startupPage };
-                prefs["homepage"] = startupPage;
-
-                File.WriteAllText(prefsFile, prefs.ToString());
-                File.WriteAllText(backupPrefsFile, prefs.ToString());
-
-                Console.WriteLine($"Startup page has been set to: {startupPage}");
-                Console.WriteLine($"Changes have been saved to: {prefsFile} and {backupPrefsFile}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error modifying preferences: {ex.Message}");
             }
         }
     }
