@@ -7,7 +7,7 @@
 # BookmarkManager
 
 BookmarkManager is a command-line interface (CLI) tool designed to import and export bookmarks between different web browsers such as Google Chrome and Microsoft Edge. It also allows setting the startup page of a browser.
-Don't forget to unzip the compressed "BookMark Manager" archive containing the application.
+To use the program, you will first need to compile the project. Run the script <span style="color: LightGreen;">**Auto_compile.ps1**</span> in PowerShell to do so. A folder named output will be created, containing the fully compiled version for your OS.
 
 ## Features
 
@@ -87,7 +87,7 @@ To set the startup page of a browser:
 # BookmarkManager
 
 BookmarkManager est un outil en ligne de commande (CLI) conçu pour importer et exporter des favoris entre différents navigateurs web tels que Google Chrome et Microsoft Edge. Il permet également de définir la page de démarrage d'un navigateur.
-N'oubliez pas de décompresser l'archive "BookMark Manager" contenant l'application.
+Pour utiliser le programme, vous devez d'abord compiler le projet. Exécutez le script <span style="color: LightGreen;">**Auto_compile.ps1**</span> dans PowerShell pour ce faire. Un dossier nommé output sera créé et contiendra la version entièrement compilée pour votre système d'exploitation.
 
 ## Fonctionnalités
 
