@@ -180,7 +180,7 @@ if (-Not ($PathAdd.ToLower() -eq "n")) {
     # Définir le chemin source et destination
     $CurrentDirectory = Get-Location
     $sourcePath = "$($CurrentDirectory.Path)\output\BookmarkManager-win-x64"
-    $destinationPath = "C:\Users\$env:USERNAME\BookmarkManager-win-x64\"
+    $destinationPath = "C:\Users\$env:USERNAME\BookmarkManager-win-x64"
 
     # Copier le dossier dans le répertoire utilisateur
     Write-Host "Copying the program to $destinationPath..." -ForegroundColor Cyan
