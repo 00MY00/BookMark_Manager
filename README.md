@@ -6,7 +6,7 @@
 
 # BookmarkManager
 
-BookmarkManager is a command-line interface (CLI) tool designed to import and export bookmarks between different web browsers such as Google Chrome and Microsoft Edge. It also allows setting the startup page of a browser.  
+BookmarkManager is a command-line interface (CLI) tool designed to import and export bookmarks between different web browsers such as Google Chrome and Microsoft Edge. It also allows setting the startup page of a browser.
 Don't forget to unzip the compressed "BookMark Manager" archive containing the application.
 
 ## Features
@@ -31,23 +31,23 @@ Don't forget to unzip the compressed "BookMark Manager" archive containing the a
 ### Available Options
 
 - `-m, --mode`: Specifies the operation mode (`import` or `export`). **Required**.
-- `-p, --path`: Specifies the path to the browser's profile folder where bookmarks are stored. **Required**.
-- `-s, --startup`: Specifies the URL of the startup page to be set for the browser. **Optional**.
-- `-e, --export-file`: Specifies the path and filename for exporting bookmarks. **Optional**.
-- `-i, --import-file`: Specifies the path and filename of the JSON file to be imported. **Optional**.
+- `-p, --profile-path`: Specifies the path to the browser's profile folder where bookmarks are stored. **Required**.
+- `-s, --startup-url`: Specifies the URL of the startup page to be set for the browser. **Optional**.
+- `-e, --export-path`: Specifies the path and filename for exporting bookmarks. **Optional**.
+- `-i, --import-path`: Specifies the path and filename of the JSON file to be imported. **Optional**.
 
 ### Exporting Bookmarks
 
 To export bookmarks from a browser to a JSON file:
 
 ```bash
-.\BookmarkManager.exe --mode export --path "C:\Path\To\Browser\Profile" --export-file "C:\Path\To\Save\MyBookmarks.json"
+.\BookmarkManager.exe --mode export --profile-path "C:\Path\To\Browser\Profile" --export-path "C:\Path\To\Save\MyBookmarks.json"
 ```
 
 **Example**: Export bookmarks from Microsoft Edge:
 
 ```bash
-.\BookmarkManager.exe --mode export --path "C:\Users\%USERNAME%\AppData\Local\Microsoft\Edge\User Data\Default" --export-file "C:\MyDocuments\EdgeBookmarks.json"
+.\BookmarkManager.exe --mode export --profile-path "C:\Users\%USERNAME%\AppData\Local\Microsoft\Edge\User Data\Default" --export-path "C:\MyDocuments\EdgeBookmarks.json"
 ```
 
 ### Importing Bookmarks
@@ -55,13 +55,13 @@ To export bookmarks from a browser to a JSON file:
 To import bookmarks from a JSON file into a browser:
 
 ```bash
-.\BookmarkManager.exe --mode import --path "C:\Path\To\Browser\Profile" --import-file "C:\Path\To\MyBookmarks.json"
+.\BookmarkManager.exe --mode import --profile-path "C:\Path\To\Browser\Profile" --import-path "C:\Path\To\MyBookmarks.json"
 ```
 
 **Example**: Import bookmarks into Google Chrome:
 
 ```bash
-.\BookmarkManager.exe --mode import --path "C:\Users\%USERNAME%\AppData\Local\Google\Chrome\User Data\Default" --import-file "C:\MyDocuments\ChromeBookmarks.json"
+.\BookmarkManager.exe --mode import --profile-path "C:\Users\%USERNAME%\AppData\Local\Google\Chrome\User Data\Default" --import-path "C:\MyDocuments\ChromeBookmarks.json"
 ```
 
 ### Setting Startup Page
@@ -69,47 +69,91 @@ To import bookmarks from a JSON file into a browser:
 To set the startup page of a browser:
 
 ```bash
-.\BookmarkManager.exe --mode <import|export> --path "C:\Path\To\Browser\Profile" --startup "https://www.example.com"
+.\BookmarkManager.exe --mode set-startup --profile-path "C:\Path\To\Browser\Profile" --startup-url "https://www.example.com"
 ```
 
 **Example**: Set the startup page in Google Chrome:
 
 ```bash
-.\BookmarkManager.exe --mode export --path "C:\Users\%USERNAME%\AppData\Local\Google\Chrome\User Data\Default" --startup "https://www.example.com"
+.\BookmarkManager.exe --mode set-startup --profile-path "C:\Users\%USERNAME%\AppData\Local\Google\Chrome\User Data\Default" --startup-url "https://www.example.com"
 ```
-
-### Using Default Paths
-
-If you do not specify the export or import path, the program will use default paths.
-
-**Example**: Export bookmarks from Microsoft Edge using the default path for `ExportedBookmarks.json`:
-
-```bash
-.\BookmarkManager.exe --mode export --path "C:\Users\%USERNAME%\AppData\Local\Microsoft\Edge\User Data\Default"
-```
-
-**Example**: Import bookmarks into Google Chrome using the default `ExportedBookmarks.json` file:
-
-```bash
-.\BookmarkManager.exe --mode import --path "C:\Users\%USERNAME%\AppData\Local\Google\Chrome\User Data\Default"
-```
-
-## Notes
-
-- Ensure that the specified path to the browser profile is correct and that the `Bookmarks` file exists.
-- During import, the `Bookmarks.bak` file is also updated to avoid accidental restoration of old bookmarks.
-
-## Troubleshooting
-
-- If the program displays a message stating that the `Bookmarks` file does not exist, it may be due to the absence of bookmarks in the browser profile. Manually add a bookmark to create the file.
-- Verify the browser profile paths by using `chrome://version/` for Chrome and `edge://version/` for Edge to confirm the exact path.
-
-## License
-
-This project is licensed under the MIT License. See the [LICENSE](https://github.com/00MY00/Win_Book_Manager/blob/main/LICENSE) file for more details.
 
 ---
 
-Pour connaître le chemin où se trouvent les favoris (Bookmarks) des navigateurs, utilisez les URLs suivantes : [EDG](https://edge://version/) pour Edge ou [CHROM](https://chrome://version/) pour Chrome.
+############
+# Français #
+############
 
+# BookmarkManager
 
+BookmarkManager est un outil en ligne de commande (CLI) conçu pour importer et exporter des favoris entre différents navigateurs web tels que Google Chrome et Microsoft Edge. Il permet également de définir la page de démarrage d'un navigateur.
+N'oubliez pas de décompresser l'archive "BookMark Manager" contenant l'application.
+
+## Fonctionnalités
+
+- **Exporter** des favoris depuis un navigateur vers un fichier JSON.
+- **Importer** des favoris depuis un fichier JSON dans un navigateur.
+- **Définir** la page de démarrage d'un navigateur.
+
+## Prérequis
+
+- .NET Core ou .NET Framework installé sur votre système.
+- Visual Studio ou tout autre environnement de développement pour compiler le projet.
+
+## Installation
+
+1. Clonez ce dépôt ou téléchargez les fichiers sources.
+2. Ouvrez le projet dans Visual Studio.
+3. Compilez le projet pour générer l'exécutable `BookmarkManager.exe`.
+
+## Utilisation
+
+### Options Disponibles
+
+- `-m, --mode`: Spécifie le mode d'opération (`import` ou `export`). **Obligatoire**.
+- `-p, --profile-path`: Spécifie le chemin vers le dossier de profil du navigateur où les favoris sont stockés. **Obligatoire**.
+- `-s, --startup-url`: Spécifie l'URL de la page de démarrage à définir pour le navigateur. **Optionnel**.
+- `-e, --export-path`: Spécifie le chemin et le nom du fichier pour exporter les favoris. **Optionnel**.
+- `-i, --import-path`: Spécifie le chemin et le nom du fichier JSON à importer. **Optionnel**.
+
+### Exporter des Favoris
+
+Pour exporter des favoris depuis un navigateur vers un fichier JSON :
+
+```bash
+.\BookmarkManager.exe --mode export --profile-path "C:\Chemin\Vers\Profil\Navigateur" --export-path "C:\Chemin\Pour\Sauvegarder\MesFavoris.json"
+```
+
+**Exemple** : Exporter des favoris depuis Microsoft Edge :
+
+```bash
+.\BookmarkManager.exe --mode export --profile-path "C:\Users\%USERNAME%\AppData\Local\Microsoft\Edge\User Data\Default" --export-path "C:\MesDocuments\FavorisEdge.json"
+```
+
+### Importer des Favoris
+
+Pour importer des favoris depuis un fichier JSON dans un navigateur :
+
+```bash
+.\BookmarkManager.exe --mode import --profile-path "C:\Chemin\Vers\Profil\Navigateur" --import-path "C:\Chemin\Pour\MesFavoris.json"
+```
+
+**Exemple** : Importer des favoris dans Google Chrome :
+
+```bash
+.\BookmarkManager.exe --mode import --profile-path "C:\Users\%USERNAME%\AppData\Local\Google\Chrome\User Data\Default" --import-path "C:\MesDocuments\FavorisChrome.json"
+```
+
+### Définir la Page de Démarrage
+
+Pour définir la page de démarrage d'un navigateur :
+
+```bash
+.\BookmarkManager.exe --mode set-startup --profile-path "C:\Chemin\Vers\Profil\Navigateur" --startup-url "https://www.example.com"
+```
+
+**Exemple** : Définir la page de démarrage dans Google Chrome :
+
+```bash
+.\BookmarkManager.exe --mode set-startup --profile-path "C:\Users\%USERNAME%\AppData\Local\Google\Chrome\User Data\Default" --startup-url "https://www.example.com"
+```
