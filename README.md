@@ -35,6 +35,7 @@ To use the program, you will first need to compile the project. Run the script <
 - `-s, --startup-url`: Specifies the URL of the startup page to be set for the browser. **Optional**.
 - `-e, --export-path`: Specifies the path and filename for exporting bookmarks. **Optional**.
 - `-i, --import-path`: Specifies the path and filename of the JSON file to be imported. **Optional**.
+- `-q, --silent`: (Optional) Silent mode: 0 (default) - normal output, 1 - minimal output (true/false).
 
 ### Exporting Bookmarks
 
@@ -115,6 +116,7 @@ Pour utiliser le programme, vous devez d'abord compiler le projet. Exécutez le 
 - `-s, --startup-url`: Spécifie l'URL de la page de démarrage à définir pour le navigateur. **Optionnel**.
 - `-e, --export-path`: Spécifie le chemin et le nom du fichier pour exporter les favoris. **Optionnel**.
 - `-i, --import-path`: Spécifie le chemin et le nom du fichier JSON à importer. **Optionnel**.
+- `-q, --silent`: (Optionnel) Mode silencieux : 0 (par défaut) - sortie normale, 1 - sortie minimale (vrai/faux).
 
 ### Exporter des Favoris
 
