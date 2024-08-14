@@ -16,8 +16,11 @@ function Test-AdminRights {
     }
 }
 
-Clear-Host
+#Clear-Host
 Test-AdminRights
+$CurrentDirectory = Get-Location
+$projectPath = "BookmarkManager.csproj"
+cd "$($CurrentDirectory.Path)\Resources"
 
 # Determine the operating system type
 $os = ""
@@ -88,6 +91,14 @@ try {
     if ($dotnetVersion) {
         Write-Host ".NET SDK is already installed. Version: $dotnetVersion"
         $dotnetInstalled = $true
+
+        # Ensure the correct NuGet source is configured
+        dotnet clean
+        dotnet build
+        Write-Host "Configuring NuGet source..."
+        dotnet nuget add source https://api.nuget.org/v3/index.json --name nuget.org
+        
+
     }
 } catch {
     Write-Host ".NET SDK is not installed."
@@ -120,20 +131,20 @@ if (-not $dotnetInstalled) {
 }
 
 # Compile the BookmarkManager.csproj project in portable mode
-$CurrentDirectory = Get-Location
-$projectPath = "BookmarkManager.csproj"
-cd "$($CurrentDirectory.Path)\Resources"
+
 
 if (Test-Path $projectPath) {
     Write-Host "Compiling the BookmarkManager project in portable mode..."
     
     if ($os -eq "Windows") {
-        & dotnet publish $projectPath -c Release -r win-x64 --self-contained=true -o "$($CurrentDirectory.Path)/output/BookmarkManager-win-x64"
+        & dotnet publish $projectPath -c Release -r win-x64 --self-contained=true /p:PublishSingleFile=true -o "$($CurrentDirectory.Path)/output/BookmarkManager-win-x64"
     } elseif ($os -eq "Linux") {
-        & dotnet publish $projectPath -c Release -r linux-x64 --self-contained=true -o "$($CurrentDirectory.Path)/output/BookmarkManager-linux-x64"
+        & dotnet publish $projectPath -c Release -r linux-x64 --self-contained=true /p:PublishSingleFile=true -o "$($CurrentDirectory.Path)/output/BookmarkManager-linux-x64"
     }
     
     Write-Host "Compilation completed."
+    dotnet list package
+
 } else {
     Write-Host "The file $projectPath does not exist in the current directory."
 }
@@ -143,7 +154,7 @@ cd "$($CurrentDirectory.Path)"
 
 
 Start-Sleep 15
-Clear-Host
+#Clear-Host
 
 # Displaying instructions with colors
 
@@ -187,14 +198,12 @@ if (-Not ($PathAdd.ToLower() -eq "n")) {
     Copy-Item -Path $sourcePath -Destination $destinationPath -Recurse -Force 2>$null
 
     # Ajouter le chemin au PATH global (de l'utilisateur)
-    if (-not ($env:PATH -like "*$destinationPath*")) {
-        [System.Environment]::SetEnvironmentVariable("PATH", $env:PATH + ";$destinationPath/BookmarkManager.exe", [System.EnvironmentVariableTarget]::User)
+    
+        [System.Environment]::SetEnvironmentVariable("PATH", $env:PATH + ";$destinationPath\BookmarkManager.exe", [System.EnvironmentVariableTarget]::User)
         Write-Host "The path $destinationPath has been added to the user PATH." -ForegroundColor Green
         # Mettre à jour la session actuelle pour que le changement soit immédiat
         $env:PATH += ";$destinationPath"
-    } else {
-        Write-Host "The path $destinationPath is already in the user PATH." -ForegroundColor Yellow
-    }
+    
 } else {
     Write-Host "The program was not added to the PATH." -ForegroundColor Red
 }
