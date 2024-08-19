@@ -19,7 +19,8 @@ function Test-AdminRights {
 #Clear-Host
 Test-AdminRights
 $CurrentDirectory = Get-Location
-$projectPath = "BookmarkManager.csproj"
+$projectPath = "BooKMarkManager\BookmarkManager.csproj"
+$projectPath2 = "AppliquePreferencesChrome\AppliquePreferencesChrome.csproj"
 cd "$($CurrentDirectory.Path)\Resources"
 
 # Determine the operating system type
@@ -138,6 +139,7 @@ if (Test-Path $projectPath) {
     
     if ($os -eq "Windows") {
         & dotnet publish $projectPath -c Release -r win-x64 --self-contained=true /p:PublishSingleFile=true -o "$($CurrentDirectory.Path)/output/BookmarkManager-win-x64"
+        & dotnet publish $projectPath2 -c Release -r win-x64 --self-contained=true /p:PublishSingleFile=true -o "$($CurrentDirectory.Path)/output/BookmarkManager-win-x64"
     } elseif ($os -eq "Linux") {
         & dotnet publish $projectPath -c Release -r linux-x64 --self-contained=true /p:PublishSingleFile=true -o "$($CurrentDirectory.Path)/output/BookmarkManager-linux-x64"
     }
@@ -185,6 +187,9 @@ Write-Host "3. You can also use BookmarkManager.exe to import bookmarks into Fir
 Write-Host "For more information on the browser paths, use this URL for Edge: 'edge://version/'" -ForegroundColor Yellow
 # Demande à l'utilisateur s'il souhaite ajouter le programme au PATH
 Write-Host "Would you like to add the program to the PATH?" -ForegroundColor Cyan
+
+exit
+
 $PathAdd = Read-Host "Y/n   -> "
 
 if (-Not ($PathAdd.ToLower() -eq "n")) {
