@@ -28,10 +28,7 @@ namespace BookmarkManager
             [Option('i', "import-file", Required = false, HelpText = "Path and filename for importing bookmarks (only for 'import' mode).")]
             public string ImportFile { get; set; }
 
-            [Option('b', "browser", Required = false, HelpText = "Specify the browser (optional, e.g., 'chrome', 'firefox').")]
-            public string Browser { get; set; }
-
-            [Option('q', "silent", Required = false, Default = 0, HelpText = "Silent mode: 0 (default) - normal output, 1 - minimal output (true/false).")]
+            [Option('q', "silent", Required = false, Default = 0, HelpText = "Silent mode: 0 (default) - normal output, 1 - minimal output.")]
             public int Silent { get; set; }
         }
 
@@ -39,7 +36,7 @@ namespace BookmarkManager
         {
             if (args.Length == 0)
             {
-                Console.WriteLine("Usage: BookmarkManager.exe --mode <import|export|set-startup> --path <browser path> [--startup <url>] [--homepage <url>] [--export-file <file path>] [--import-file <file path>] [--browser <browser>] [--silent <0|1>]");
+                Console.WriteLine("Usage: BookmarkManager.exe --mode <import|export|set-startup> --path <browser path> [--startup <url>] [--homepage <url>] [--export-file <file path>] [--import-file <file path>] [--silent <0|1>]");
                 Thread.Sleep(20000);
                 return;
             }
@@ -63,11 +60,6 @@ namespace BookmarkManager
             else if (opts.Mode == "set-startup" && (!string.IsNullOrEmpty(opts.StartupPage) || !string.IsNullOrEmpty(opts.Homepage)))
             {
                 success = SetStartupPage(opts.Path, opts.StartupPage, opts.Homepage, opts.Silent);
-                if (success)
-                {
-                    // Valider les préférences après modification
-                    success = AppliquePreferencesChrome.ValidatePreferences(opts.Path);
-                }
             }
             else
             {
@@ -106,10 +98,6 @@ namespace BookmarkManager
                 // Assurer que les sections nécessaires existent
                 prefs["browser"] = prefs["browser"] ?? new JObject();
                 prefs["session"] = prefs["session"] ?? new JObject();
-                prefs["profile"] = prefs["profile"] ?? new JObject();
-                prefs["profile"]["content_settings"] = prefs["profile"]["content_settings"] ?? new JObject();
-                prefs["profile"]["content_settings"]["exceptions"] = prefs["profile"]["content_settings"]["exceptions"] ?? new JObject();
-                prefs["profile"]["content_settings"]["exceptions"]["http_allowed"] = prefs["profile"]["content_settings"]["exceptions"]["http_allowed"] ?? new JObject();
 
                 string formattedUrl = startupPage;
                 if (!startupPage.Contains("://"))
@@ -117,23 +105,12 @@ namespace BookmarkManager
                     formattedUrl = "https://" + startupPage;
                 }
 
-                string formattedUrlWithPort = formattedUrl.Contains(":443") ? formattedUrl : formattedUrl + ":443";
-
                 // Configurer la page de démarrage
                 if (!string.IsNullOrEmpty(startupPage))
                 {
                     prefs["browser"]["first_run_tabs"] = new JArray { formattedUrl };
-
                     prefs["session"]["restore_on_startup"] = 4;
                     prefs["session"]["startup_urls"] = new JArray { formattedUrl };
-
-                    // Configuration des exceptions pour le http_allowed
-                    if (prefs["profile"]["content_settings"]["exceptions"]["http_allowed"][formattedUrlWithPort] == null)
-                    {
-                        prefs["profile"]["content_settings"]["exceptions"]["http_allowed"][formattedUrlWithPort] = new JObject();
-                    }
-                    prefs["profile"]["content_settings"]["exceptions"]["http_allowed"][formattedUrlWithPort]["last_modified"] = DateTime.UtcNow.Ticks.ToString();
-                    prefs["profile"]["content_settings"]["exceptions"]["http_allowed"][formattedUrlWithPort]["setting"] = new JObject();
                 }
 
                 // Configurer la page d'accueil
