@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using Newtonsoft.Json.Linq;
 using System.Threading;
+using System.Linq;
 
 namespace BookmarkManager
 {
@@ -19,16 +20,16 @@ namespace BookmarkManager
             [Option('s', "startup", Required = false, HelpText = "Startup page URL (only required for 'set-startup' mode).")]
             public string StartupPage { get; set; }
 
-            [Option('h', "homepage", Required = false, HelpText = "Homepage URL (optional, typically used with 'set-startup' mode).")]
-            public string Homepage { get; set; }
-
             [Option('e', "export-file", Required = false, HelpText = "Path and filename for exporting bookmarks (only for 'export' mode).")]
             public string ExportFile { get; set; }
 
             [Option('i', "import-file", Required = false, HelpText = "Path and filename for importing bookmarks (only for 'import' mode).")]
             public string ImportFile { get; set; }
 
-            [Option('q', "silent", Required = false, Default = 0, HelpText = "Silent mode: 0 (default) - normal output, 1 - minimal output.")]
+            [Option('b', "browser", Required = false, HelpText = "Specify the browser (optional, e.g., 'chrome', 'firefox').")]
+            public string Browser { get; set; }
+
+            [Option('q', "silent", Required = false, Default = 0, HelpText = "Silent mode: 0 (default) - normal output, 1 - minimal output (true/false).")]
             public int Silent { get; set; }
         }
 
@@ -36,7 +37,16 @@ namespace BookmarkManager
         {
             if (args.Length == 0)
             {
-                Console.WriteLine("Usage: BookmarkManager.exe --mode <import|export|set-startup> --path <browser path> [--startup <url>] [--homepage <url>] [--export-file <file path>] [--import-file <file path>] [--silent <0|1>]");
+                Console.WriteLine("Usage: BookmarkManager.exe --mode <import|export|set-startup> --path <browser path> [--startup <url>] [--export-file <file path>] [--import-file <file path>] [--browser <browser>] [--silent <0|1>]");
+                Console.WriteLine("Options:");
+                Console.WriteLine("  -m, --mode           Mode of operation: 'import', 'export', or 'set-startup'.");
+                Console.WriteLine("  -p, --path           Path to the browser where bookmarks or preferences are stored.");
+                Console.WriteLine("  -s, --startup        (Optional) Startup page URL (only required for 'set-startup' mode).");
+                Console.WriteLine("  -e, --export-file    (Optional) Path and filename for exporting bookmarks (only for 'export' mode).");
+                Console.WriteLine("  -i, --import-file    (Optional) Path and filename for importing bookmarks (only for 'import' mode).");
+                Console.WriteLine("  -b, --browser        (Optional) Specify the browser (e.g., 'chrome', 'firefox').");
+                Console.WriteLine("  -q, --silent         (Optional) Silent mode: 0 (default) - normal output, 1 - minimal output (true/false).");
+
                 Thread.Sleep(20000);
                 return;
             }
@@ -57,9 +67,9 @@ namespace BookmarkManager
             {
                 success = ExportBookmarks(opts.Path, opts.ExportFile, opts.Silent);
             }
-            else if (opts.Mode == "set-startup" && (!string.IsNullOrEmpty(opts.StartupPage) || !string.IsNullOrEmpty(opts.Homepage)))
+            else if (opts.Mode == "set-startup" && !string.IsNullOrEmpty(opts.StartupPage))
             {
-                success = SetStartupPage(opts.Path, opts.StartupPage, opts.Homepage, opts.Silent);
+                success = SetStartupPage(opts.Path, opts.StartupPage, opts.Silent);
             }
             else
             {
@@ -70,75 +80,16 @@ namespace BookmarkManager
                 return;
             }
 
-            if (opts.Silent == 0)
+            if (opts.Silent == 1)
             {
-                Console.WriteLine(success ? "Operation completed successfully." : "Operation failed.");
-            }
-        }
-
-        public static bool SetStartupPage(string browserPath, string startupPage, string homepage, int silent)
-        {
-            try
-            {
-                string prefsFile = Path.Combine(browserPath, "Preferences");
-                string backupPrefsFile = Path.Combine(browserPath, "Preferences.bak");
-
-                if (!File.Exists(prefsFile))
-                {
-                    if (silent == 0)
-                    {
-                        Console.WriteLine($"The preferences file '{prefsFile}' does not exist.");
-                    }
-                    return false;
-                }
-
-                var json = File.ReadAllText(prefsFile);
-                var prefs = JObject.Parse(json);
-
-                // Assurer que les sections nécessaires existent
-                prefs["browser"] = prefs["browser"] ?? new JObject();
-                prefs["session"] = prefs["session"] ?? new JObject();
-
-                string formattedUrl = startupPage;
-                if (!startupPage.Contains("://"))
-                {
-                    formattedUrl = "https://" + startupPage;
-                }
-
-                // Configurer la page de démarrage
-                if (!string.IsNullOrEmpty(startupPage))
-                {
-                    prefs["browser"]["first_run_tabs"] = new JArray { formattedUrl };
-                    prefs["session"]["restore_on_startup"] = 4;
-                    prefs["session"]["startup_urls"] = new JArray { formattedUrl };
-                }
-
-                // Configurer la page d'accueil
-                if (!string.IsNullOrEmpty(homepage))
-                {
-                    prefs["homepage"] = homepage;
-                    prefs["browser"]["homepage"] = homepage;
-                    prefs["browser"]["homepage_is_newtabpage"] = false;
-                }
-
-                // Sauvegarder le fichier
-                File.WriteAllText(prefsFile, prefs.ToString());
-                File.WriteAllText(backupPrefsFile, prefs.ToString());
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                if (silent == 0)
-                {
-                    Console.WriteLine($"Error modifying preferences: {ex.Message}");
-                }
-                return false;
+                Console.WriteLine(success ? "true" : "false");
             }
         }
 
         public static bool ImportBookmarks(string browserPath, string importFilePath, int silent)
         {
+            bool exceptionOccurred = false;
+
             try
             {
                 string bookmarkFile = Path.Combine(browserPath, "Bookmarks");
@@ -176,7 +127,7 @@ namespace BookmarkManager
                 File.WriteAllText(bookmarkFile, existingBookmarks.ToString());
                 File.WriteAllText(backupFile, existingBookmarks.ToString());
 
-                return true;
+                return exceptionOccurred ? throw new Exception("trueWithExceptions") : true;
             }
             catch (Exception ex)
             {
@@ -184,12 +135,14 @@ namespace BookmarkManager
                 {
                     Console.WriteLine($"Error during bookmark import: {ex.Message}");
                 }
-                return false;
+                return exceptionOccurred ? throw new Exception("trueWithExceptions") : false;
             }
         }
 
         public static bool ExportBookmarks(string browserPath, string exportFilePath, int silent)
         {
+            bool exceptionOccurred = false;
+
             try
             {
                 string bookmarkFile = Path.Combine(browserPath, "Bookmarks");
@@ -213,7 +166,7 @@ namespace BookmarkManager
 
                 File.WriteAllText(exportFilePath, bookmarks.ToString());
 
-                return true;
+                return exceptionOccurred ? throw new Exception("trueWithExceptions") : true;
             }
             catch (IOException ex)
             {
@@ -221,7 +174,7 @@ namespace BookmarkManager
                 {
                     Console.WriteLine($"File access error: {ex.Message}");
                 }
-                return false;
+                return exceptionOccurred ? throw new Exception("trueWithExceptions") : false;
             }
             catch (Exception ex)
             {
@@ -229,7 +182,49 @@ namespace BookmarkManager
                 {
                     Console.WriteLine($"An error occurred: {ex.Message}");
                 }
-                return false;
+                return exceptionOccurred ? throw new Exception("trueWithExceptions") : false;
+            }
+        }
+
+        public static bool SetStartupPage(string browserPath, string startupPage, int silent)
+        {
+            bool exceptionOccurred = false;
+
+            try
+            {
+                string prefsFile = Path.Combine(browserPath, "Preferences");
+                string backupPrefsFile = Path.Combine(browserPath, "Preferences.bak");
+
+                if (!File.Exists(prefsFile))
+                {
+                    if (silent == 0)
+                    {
+                        Console.WriteLine($"The preferences file '{prefsFile}' does not exist.");
+                    }
+                    return false;
+                }
+
+                var json = File.ReadAllText(prefsFile);
+                var prefs = JObject.Parse(json);
+
+                prefs["session"] = prefs["session"] ?? new JObject();
+                prefs["session"]["restore_on_startup"] = 4;
+
+                prefs["session"]["startup_urls"] = new JArray { startupPage };
+                prefs["homepage"] = startupPage;
+
+                File.WriteAllText(prefsFile, prefs.ToString());
+                File.WriteAllText(backupPrefsFile, prefs.ToString());
+
+                return exceptionOccurred ? throw new Exception("trueWithExceptions") : true;
+            }
+            catch (Exception ex)
+            {
+                if (silent == 0)
+                {
+                    Console.WriteLine($"Error modifying preferences: {ex.Message}");
+                }
+                return exceptionOccurred ? throw new Exception("trueWithExceptions") : false;
             }
         }
 
@@ -269,6 +264,7 @@ namespace BookmarkManager
             {
                 foreach (var importedItem in importedChildren)
                 {
+                    // Vérifier si l'élément importé existe déjà pour éviter les doublons
                     var matchingItem = existingChildren.FirstOrDefault(
                         child => child["name"]?.ToString() == importedItem["name"]?.ToString() &&
                         child["url"]?.ToString() == importedItem["url"]?.ToString()
@@ -276,7 +272,7 @@ namespace BookmarkManager
 
                     if (matchingItem != null)
                     {
-                        continue;
+                        continue; // Ignorer l'élément s'il existe déjà
                     }
 
                     var matchingFolder = existingChildren.FirstOrDefault(
